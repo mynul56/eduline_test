@@ -6,6 +6,31 @@ class SharedPrefRepository {
     return await sp.setBool(Pref.isFirst, false);
   }
 
+  Future<void> saveString(String key, String value) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    await sp.setString(key, value);
+  }
+
+  Future<String?> getString(String key) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    return sp.getString(key);
+  }
+
+  Future<void> saveBool(String key, bool value) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    await sp.setBool(key, value);
+  }
+
+  Future<bool?> getBool(String key) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    return sp.getBool(key);
+  }
+
+  Future<void> remove(String key) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    await sp.remove(key);
+  }
+
   static saveRememberMe(bool rememberMe) async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
     return sp.setBool(Pref.rememberMe, rememberMe);

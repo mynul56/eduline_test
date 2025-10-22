@@ -35,6 +35,42 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
 
   final _authRepository = AuthRepository();
+  final _prefRepository = SharedPrefRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  _loadSavedCredentials() async {
+    final email = await _prefRepository.getString('saved_email');
+    final password = await _prefRepository.getString('saved_password');
+    final remember = await _prefRepository.getBool('remember_me');
+
+    if (mounted && remember == true && email != null && password != null) {
+      setState(() {
+        _emailController.text = email;
+        _passwordController.text = password;
+        _rememberMe = true;
+      });
+    }
+  }
+
+  _saveCredentials() async {
+    if (_rememberMe) {
+      await _prefRepository.saveString('saved_email', _emailController.text);
+      await _prefRepository.saveString(
+        'saved_password',
+        _passwordController.text,
+      );
+      await _prefRepository.saveBool('remember_me', true);
+    } else {
+      await _prefRepository.remove('saved_email');
+      await _prefRepository.remove('saved_password');
+      await _prefRepository.remove('remember_me');
+    }
+  }
 
   _login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -48,6 +84,24 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success) {
+        // Save credentials if remember me is checked
+        if (_rememberMe) {
+          await _prefRepository.saveString(
+            'saved_email',
+            _emailController.text,
+          );
+          await _prefRepository.saveString(
+            'saved_password',
+            _passwordController.text,
+          );
+          await _prefRepository.saveBool('remember_me', true);
+        } else {
+          // Clear saved credentials if remember me is unchecked
+          await _prefRepository.remove('saved_email');
+          await _prefRepository.remove('saved_password');
+          await _prefRepository.remove('remember_me');
+        }
+
         if (mounted) setState(() => _isLoading = false);
         _showSuccess();
       } else {
@@ -159,6 +213,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: "Email Address",
                   isPassword: false,
                   hintText: "e.g. mynulislamtanim@gmail.com",
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
                   autofillHints: const [
                     AutofillHints.username,
                     AutofillHints.email,
@@ -169,9 +234,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: "Password",
                   hintText: "e.g. 123456789",
                   controller: _passwordController,
-                  isPassword: _isPasswordVisible,
+                  isPassword: !_isPasswordVisible,
                   autofillHints: const [AutofillHints.password],
                   visibility: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
                   onSuffixTap: () {
                     setState(() => _isPasswordVisible = !_isPasswordVisible);
                   },

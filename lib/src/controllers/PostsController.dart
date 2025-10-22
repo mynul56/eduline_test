@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mynul_test/src/models/PostModel.dart';
 import 'package:mynul_test/src/repository/api/posts_api_service.dart';
